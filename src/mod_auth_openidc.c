@@ -3257,7 +3257,7 @@ static int oidc_handle_session_management_iframe_rp(request_rec *r, oidc_cfg *c,
 	if (session_state == NULL) {
 		oidc_warn(r,
 				"no session_state found in the session; the OP does probably not support session management!?");
-		return OK;
+		//return OK;
 	}
 
 	char *s_poll_interval = NULL;
@@ -3297,7 +3297,11 @@ static int oidc_handle_session_management(request_rec *r, oidc_cfg *c,
 		return oidc_handle_logout_request(r, c, session, c->default_slo_url);
 	}
 
-	oidc_get_provider_from_session(r, c, session, &provider);
+	if (oidc_get_provider_from_session(r, c, session, &provider) == FALSE) {
+		if ((oidc_provider_static_config(r, c, &provider) == FALSE)
+				|| (provider == NULL))
+			return HTTP_NOT_FOUND;
+	}
 
 	/* see if this is a request for the OP iframe */
 	if (apr_strnatcmp("iframe_op", cmd) == 0) {
