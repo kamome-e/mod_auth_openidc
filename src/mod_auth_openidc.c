@@ -3268,7 +3268,7 @@ static int oidc_handle_session_management_iframe_rp(request_rec *r, oidc_cfg *c,
 
 	const char *redirect_uri = oidc_get_redirect_uri(r, c);
 	java_script = apr_psprintf(r->pool, java_script, origin, client_id,
-			session_state, op_iframe_id, poll_interval, redirect_uri,
+			session_state ? session_state : "", op_iframe_id, poll_interval, redirect_uri,
 			redirect_uri);
 
 	return oidc_util_html_send(r, NULL, java_script, "setTimer", NULL, OK);
