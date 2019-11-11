@@ -3343,8 +3343,13 @@ static int oidc_handle_session_management(request_rec *r, oidc_cfg *c,
 							oidc_dir_cfg_path_scope(r));
 		}
 		oidc_debug(r,
-				"[session=check] calling oidc_handle_logout_request because no session found.");
-		return oidc_session_redirect_parent_window_to_logout(r, c);
+				"[session=check] calling refresh parent window because no session found.");
+		char *java_script = apr_psprintf(r->pool,
+				"    <script type=\"text/javascript\">\n"
+				"      window.top.location.reload();\n"
+				"    </script>\n");
+		return oidc_util_html_send(r, "Reloading...", java_script, NULL, NULL,
+				OK);
 	}
 
 	/* handle failure in fallthrough */
