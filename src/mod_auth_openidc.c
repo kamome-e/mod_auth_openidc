@@ -3208,7 +3208,9 @@ static int oidc_handle_session_management_iframe_rp(request_rec *r, oidc_cfg *c,
 	const char *java_script =
 			"    <script type=\"text/javascript\">\n"
 			"      var targetOrigin  = '%s';\n"
-			"      var message = '%s' + ' ' + '%s';\n"
+			"      var clientId  = '%s';\n"
+			"      var sessionId  = '%s';\n"    
+			"      var message = clientId + ' ' + sessionId;\n"
 			"	   var timerID;\n"
 			"\n"
 			"      function checkSession() {\n"
@@ -3231,9 +3233,13 @@ static int oidc_handle_session_management_iframe_rp(request_rec *r, oidc_cfg *c,
 			"        if (e.data != 'unchanged') {\n"
 			"          clearInterval(timerID);\n"
 			"          if (e.data == 'changed') {\n"
-			"		     window.location.href = '%s?session=check';\n"
+			"            if (sessionId == '' ) {\n"
+      "              window.top.location.replace('%s');
+      "            } else {\n"
+      "              window.location.href = '%s?session=logout';\n"
+  	  "            }\n"
 			"          } else {\n"
-			"		     window.location.href = '%s?session=logout';\n"
+			"		         window.location.href = '%s?session=logout';\n"
 			"          }\n"
 			"        }\n"
 			"      }\n"
@@ -3266,9 +3272,13 @@ static int oidc_handle_session_management_iframe_rp(request_rec *r, oidc_cfg *c,
 	if ((poll_interval <= 0) || (poll_interval > 3600 * 24))
 		poll_interval = 3000;
 
+  char *login_uri = NULL;
+  oidc_util_get_request_parameter(r, "login_uri", &login_uri);
+  
 	const char *redirect_uri = oidc_get_redirect_uri(r, c);
+  
 	java_script = apr_psprintf(r->pool, java_script, origin, client_id,
-			session_state ? session_state : "", op_iframe_id, poll_interval, redirect_uri,
+			session_state ? session_state : "", op_iframe_id, poll_interval, login_uri, redirect_uri,
 			redirect_uri);
 
 	return oidc_util_html_send(r, NULL, java_script, "setTimer", NULL, OK);
