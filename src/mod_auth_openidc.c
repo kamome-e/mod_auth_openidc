@@ -3328,28 +3328,17 @@ static int oidc_handle_session_management(request_rec *r, oidc_cfg *c,
 	/* see if this is a request check the login state with the OP */
 	if (apr_strnatcmp("check", cmd) == 0) {
 		id_token_hint = oidc_session_get_idtoken(r, session);
-		if ((session->remote_user != NULL) && (provider != NULL)) {
-			/*
-			 * TODO: this doesn't work with per-path provided auth_request_params and scopes
-			 *       as oidc_dir_cfg_path_auth_request_params and oidc_dir_cfg_path_scope will pick
-			 *       those for the redirect_uri itself; do we need to store those as part of the
-			 *       session now?
-			 */
-			return oidc_authenticate_user(r, c, provider,
-					apr_psprintf(r->pool, "%s?session=iframe_rp",
-							oidc_get_redirect_uri_iss(r, c, provider)), NULL,
-							id_token_hint, "none",
-							oidc_dir_cfg_path_auth_request_params(r),
-							oidc_dir_cfg_path_scope(r));
-		}
-		oidc_debug(r,
-				"[session=check] calling refresh parent window because no session found.");
-		char *java_script = apr_psprintf(r->pool,
-				"    <script type=\"text/javascript\">\n"
-				"      window.top.location.reload();\n"
-				"    </script>\n");
-		return oidc_util_html_send(r, "Reloading...", java_script, NULL, NULL,
-				OK);
+		/*
+		 * TODO: this doesn't work with per-path provided auth_request_params and scopes
+		 *       as oidc_dir_cfg_path_auth_request_params and oidc_dir_cfg_path_scope will pick
+		 *       those for the redirect_uri itself; do we need to store those as part of the
+		 *       session now?
+		 */
+		return oidc_authenticate_user(r, c, provider,
+				apr_psprintf(r->pool, "%s?session=iframe_rp",
+						oidc_get_redirect_uri_iss(r, c, provider)), NULL,
+						id_token_hint, "none", oidc_dir_cfg_path_auth_request_params(r),
+						oidc_dir_cfg_path_scope(r));
 	}
 
 	/* handle failure in fallthrough */
