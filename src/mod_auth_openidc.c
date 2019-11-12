@@ -3210,6 +3210,7 @@ static int oidc_handle_session_management_iframe_rp(request_rec *r, oidc_cfg *c,
 			"      var targetOrigin  = '%s';\n"
 			"      var clientId  = '%s';\n"
 			"      var sessionId  = '%s';\n"
+			"      var loginUrl  = '%s';\n"
 			"      var message = clientId + ' ' + sessionId;\n"
 			"	   var timerID;\n"
 			"\n"
@@ -3233,10 +3234,10 @@ static int oidc_handle_session_management_iframe_rp(request_rec *r, oidc_cfg *c,
 			"        if (e.data != 'unchanged') {\n"
 			"          clearInterval(timerID);\n"
 			"          if (e.data == 'changed') {\n"
-			"            if (sessionId == '' ) {\n"
-			"              window.top.location.replace('%s');\n"
+			"            if (sessionId == '' && loginUrl != '') {\n"
+			"              window.top.location.replace(loginUrl);\n"
 			"            } else {\n"
-			"              window.location.href = '%s?session=logout';\n"
+			"              window.top.location.replace('%s?logout=' + window.top.location.href);\n"
 			"            }\n"
 			"          } else {\n"
 			"		         window.location.href = '%s?session=logout';\n"
@@ -3272,14 +3273,14 @@ static int oidc_handle_session_management_iframe_rp(request_rec *r, oidc_cfg *c,
 	if ((poll_interval <= 0) || (poll_interval > 3600 * 24))
 		poll_interval = 3000;
 
-  char *login_uri = NULL;
-  oidc_util_get_request_parameter(r, "login_uri", &login_uri);
-  
+	char *login_uri = NULL;
+	oidc_util_get_request_parameter(r, "login_uri", &login_uri);
+
 	const char *redirect_uri = oidc_get_redirect_uri(r, c);
-  
+
 	java_script = apr_psprintf(r->pool, java_script, origin, client_id,
-			session_state ? session_state : "", op_iframe_id, poll_interval, login_uri, redirect_uri,
-			redirect_uri);
+			session_state ? session_state : "", login_uri ? login_uri : "",
+					op_iframe_id, poll_interval, redirect_uri, redirect_uri);
 
 	return oidc_util_html_send(r, NULL, java_script, "setTimer", NULL, OK);
 }
